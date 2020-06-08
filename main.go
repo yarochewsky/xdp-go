@@ -91,6 +91,12 @@ func run() error {
 			return err
 		}
 
+    if len(r.RawSample) == 0 {
+      continue
+    }
+
+    fmt.Println(len(r.RawSample))
+
 		var e internalPcapEvent
 		if err = binary.Read(bytes.NewBuffer(r.RawSample), binary.LittleEndian, &e); err != nil {
 			return err

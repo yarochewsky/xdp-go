@@ -1,13 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
 #include <linux/bpf.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <linux/pkt_cls.h>
 #include <bpf/bpf_helpers.h>
+#include "parsing.h"
+#include <linux/ptrace.h>
+#include <linux/socket.h>
+#include <linux/sched.h>
+#include <linux/perf_event.h>
 
 #define SAMPLE_SIZE 1024ul
-#define MAX_CPUS 4
 
 #ifndef __packed
 #define __packed __attribute__((packed))
 #endif
+
+
+#define bpf_printk(fmt, ...)                                    \
+({                                                              \
+	char ____fmt[] = fmt;                                   \
+	bpf_trace_printk(____fmt, sizeof(____fmt),              \
+                         ##__VA_ARGS__);                        \
+})
+
+
 
 #define min(x, y) ((x) < (y) ? (x) : (y))
 
@@ -22,26 +38,17 @@ struct bpf_map_def SEC("maps") my_map = {
 	.type = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
 	.key_size = sizeof(int),
 	.value_size = sizeof(__u32),
-	.max_entries = MAX_CPUS,
+	.max_entries = 0,
 };
 
-SEC("xdp_send")
-int xdp_send_prog(struct xdp_md *ctx)
-{
+
+SEC("xdp/send")
+int xdp_send_prog(struct xdp_md* ctx) {
 	void *data_end = (void *)(long)ctx->data_end;
 	void *data = (void *)(long)ctx->data;
 
-	if (data < data_end) {
-		/* The XDP perf_event_output handler will use the upper 32 bits
-		 * of the flags argument as a number of bytes to include of the
-		 * packet payload in the event data. If the size is too big, the
-		 * call to bpf_perf_event_output will fail and return -EFAULT.
-		 *
-		 * See bpf_xdp_event_output in net/core/filter.c.
-		 *
-		 * The BPF_F_CURRENT_CPU flag means that the event output fd
-		 * will be indexed by the CPU number in the event map.
-		 */
+  if (data < data_end) {
+
 		__u64 flags = BPF_F_CURRENT_CPU;
 		__u16 sample_size;
 		struct S metadata;
@@ -53,8 +60,7 @@ int xdp_send_prog(struct xdp_md *ctx)
 		flags |= (__u64) sample_size << 32;
 
 		bpf_perf_event_output(ctx, &my_map, flags, &metadata, sizeof(metadata));
-	}
-
+  }
 	return XDP_PASS;
 }
 

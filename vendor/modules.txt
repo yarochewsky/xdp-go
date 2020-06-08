@@ -1,0 +1,13 @@
+# github.com/cilium/ebpf v0.0.0-20200601085316-9f1617e5c574
+github.com/cilium/ebpf
+github.com/cilium/ebpf/perf
+github.com/cilium/ebpf/asm
+github.com/cilium/ebpf/internal
+github.com/cilium/ebpf/internal/btf
+github.com/cilium/ebpf/internal/unix
+# golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
+golang.org/x/sys/unix
+golang.org/x/sys/internal/unsafeheader
+# golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
+golang.org/x/xerrors
+golang.org/x/xerrors/internal
